@@ -11,7 +11,7 @@ Analyzes a resume text and extracts structured information including:
 - List of sections present in the resume
 - Seniority-aware resume health signals
 
-Uses OpenAI's gpt-4o-mini model with JSON output enforcement.
+Uses Anthropic's claude-haiku-4-5-20251001 model with JSON-only prompt enforcement.
 Validates input and output against Pydantic schemas defined in schemas/agent1_schema.py.
 """
 
@@ -38,13 +38,17 @@ class ResumeUnderstandingAgent(BaseAgent):
     against ResumeUnderstandingOutput, and returns model_dump() with
     an additional 'resume_health' key for the Evaluate tab.
 
-    Model: gpt-4o-mini
-    Max tokens: 4000
-    Provider: OpenAI
+    Model: claude-haiku-4-5-20251001
+    Max tokens: 6000
+    Provider: Anthropic
     """
 
     def __init__(self):
-        super().__init__(model="gpt-5.4-mini", max_completion_tokens=6000, provider="openai")
+        super().__init__(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=6000,
+            provider="anthropic",
+        )
 
     def run(self, input_dict: dict) -> dict:
         """
@@ -70,7 +74,7 @@ class ResumeUnderstandingAgent(BaseAgent):
         inp = ResumeUnderstandingInput(**input_dict)
 
         resume_text = inp.resume_text
-        # gpt-5.4-mini has 128k token context (~512k chars). Cap at 500k to leave room for system prompt and response.
+        # Cap very large resumes to leave room for the system prompt and JSON response.
         max_chars = 500000
         if len(resume_text) > max_chars:
             resume_text = resume_text[:max_chars] + "...[truncated]"

@@ -13,8 +13,8 @@ Uses semantic understanding: e.g., 'event streaming' implies Kafka/Pulsar,
 'fast APIs' implies low-latency knowledge, not just REST frameworks.
 
 Validates input and output against Pydantic schemas defined in schemas/agent2_schema.py.
-Provider: OpenAI (gpt-4o-mini)
-Max tokens: 4000
+Provider: Anthropic (claude-haiku-4-5-20251001)
+Max tokens: 5000
 """
 
 import json
@@ -33,13 +33,17 @@ class JDIntelligenceAgent(BaseAgent):
     Validates input against JDIntelligenceInput, calls LLM, parses JSON response,
     validates output against JDIntelligenceOutput.
 
-    Model: gpt-5.4-mini
+    Model: claude-haiku-4-5-20251001
     Max tokens: 5000
-    Provider: OpenAI
+    Provider: Anthropic
     """
 
     def __init__(self):
-        super().__init__(model="gpt-5.4-mini", max_tokens=5000, provider="openai")
+        super().__init__(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=5000,
+            provider="anthropic",
+        )
 
     def run(self, input_dict: dict) -> dict:
         """
@@ -59,7 +63,7 @@ class JDIntelligenceAgent(BaseAgent):
         inp = JDIntelligenceInput(**input_dict)
         jd_text = inp.jd_text
 
-        # JDs are rarely long, but cap at 500k chars (≈125k tokens) to match gpt-5.4-mini context budget
+        # JDs are rarely long, but cap very large inputs to leave room for the prompt and JSON response.
         max_chars = 500000
         if len(jd_text) > max_chars:
             jd_text = jd_text[:max_chars] + "...[truncated]"

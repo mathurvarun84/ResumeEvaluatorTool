@@ -23,14 +23,14 @@ a3 = GapAnalyzerAgent()
 a4 = RewriterAgent()
 
 checks = [
-    ("Agent 1 model = gpt-4o-mini", a1.model == "gpt-4o-mini"),
-    ("Agent 1 provider = openai", a1.provider == "openai"),
-    ("Agent 1 max_tokens = 4000", a1.max_tokens == 4000),
-    ("Agent 2 model = gpt-4o-mini", a2.model == "gpt-4o-mini"),
-    ("Agent 2 provider = openai", a2.provider == "openai"),
-    ("Agent 2 max_tokens = 4000", a2.max_tokens == 4000),
-    ("Agent 3 model = gpt-4o-mini", a3.model == "gpt-4o-mini"),
-    ("Agent 3 provider = openai", a3.provider == "openai"),
+    ("Agent 1 model = claude-haiku-4-5-20251001", a1.model == "claude-haiku-4-5-20251001"),
+    ("Agent 1 provider = anthropic", a1.provider == "anthropic"),
+    ("Agent 1 max_tokens = 6000", a1.max_tokens == 6000),
+    ("Agent 2 model = claude-haiku-4-5-20251001", a2.model == "claude-haiku-4-5-20251001"),
+    ("Agent 2 provider = anthropic", a2.provider == "anthropic"),
+    ("Agent 2 max_tokens = 5000", a2.max_tokens == 5000),
+    ("Agent 3 model = claude-haiku-4-5-20251001", a3.model == "claude-haiku-4-5-20251001"),
+    ("Agent 3 provider = anthropic", a3.provider == "anthropic"),
     ("Agent 3 max_tokens = 4000", a3.max_tokens == 4000),
     ("Agent 4 model = gpt-4o-mini", a4.model == "gpt-4o-mini"),
     ("Agent 4 provider = openai", a4.provider == "openai"),
@@ -172,7 +172,7 @@ print("\n8. FORBIDDEN PATTERNS")
 forbidden = [
     "asyncio",
     "streamlit",
-    "anthropic",
+    "import anthropic",
     "from openai import OpenAI",  # should use base_agent routing
 ]
 for pattern in forbidden:

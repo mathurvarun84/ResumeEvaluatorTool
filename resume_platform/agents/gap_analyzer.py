@@ -4,7 +4,7 @@ GapAnalyzerAgent - Agent 3 of the Resume Intelligence Platform.
 Compares structured resume data (from Agent 1) against JD intelligence
 (from Agent 2) to produce a prioritized gap list for Agent 4 (Rewriter).
 
-Provider: OpenAI (gpt-4o-mini)
+Provider: Anthropic (claude-haiku-4-5-20251001)
 Max tokens: 4000
 """
 
@@ -164,7 +164,8 @@ class GapAnalyzerAgent(BaseAgent):
     (from Agent 2) to produce a prioritized section gap list for Agent 4 (Rewriter).
 
     Runs sequentially after Agents 1 and 2. Cannot run without both upstream outputs.
-    Uses gpt-4o-mini via OpenAI SDK. Returns GapAnalyzerOutput or DetailedEvalOutput as dict.
+    Uses claude-haiku-4-5-20251001 through BaseAgent. Returns GapAnalyzerOutput or
+    DetailedEvalOutput as dict.
 
     Invariants:
         - Input must contain validated Agent 1 and Agent 2 output dicts
@@ -175,7 +176,11 @@ class GapAnalyzerAgent(BaseAgent):
     """
 
     def __init__(self):
-        super().__init__(model="gpt-4o-mini", max_tokens=4000, provider="openai")
+        super().__init__(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=4000,
+            provider="anthropic",
+        )
 
     def run(self, input_dict: dict) -> dict:
         """
