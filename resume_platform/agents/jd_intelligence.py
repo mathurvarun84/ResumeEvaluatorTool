@@ -13,8 +13,8 @@ Uses semantic understanding: e.g., 'event streaming' implies Kafka/Pulsar,
 'fast APIs' implies low-latency knowledge, not just REST frameworks.
 
 Validates input and output against Pydantic schemas defined in schemas/agent2_schema.py.
-Provider: Anthropic (claude-haiku-4-5-20251001)
-Max tokens: 5000
+Provider: OpenAI (gpt-4o-mini)
+Max tokens: 4000
 """
 
 import json
@@ -33,17 +33,13 @@ class JDIntelligenceAgent(BaseAgent):
     Validates input against JDIntelligenceInput, calls LLM, parses JSON response,
     validates output against JDIntelligenceOutput.
 
-    Model: claude-haiku-4-5-20251001
-    Max tokens: 5000
-    Provider: Anthropic
+    Model: gpt-4o-mini
+    Max tokens: 4000
+    Provider: OpenAI
     """
 
     def __init__(self):
-        super().__init__(
-            model="claude-haiku-4-5-20251001",
-            max_tokens=5000,
-            provider="anthropic",
-        )
+        super().__init__(model="gpt-4o-mini", max_tokens=4000, provider="openai")
 
     def run(self, input_dict: dict) -> dict:
         """

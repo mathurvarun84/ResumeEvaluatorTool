@@ -11,7 +11,7 @@ Analyzes a resume text and extracts structured information including:
 - List of sections present in the resume
 - Seniority-aware resume health signals
 
-Uses Anthropic's claude-haiku-4-5-20251001 model with JSON-only prompt enforcement.
+Uses OpenAI's gpt-4o-mini model with JSON output enforcement.
 Validates input and output against Pydantic schemas defined in schemas/agent1_schema.py.
 """
 
@@ -38,17 +38,13 @@ class ResumeUnderstandingAgent(BaseAgent):
     against ResumeUnderstandingOutput, and returns model_dump() with
     an additional 'resume_health' key for the Evaluate tab.
 
-    Model: claude-haiku-4-5-20251001
-    Max tokens: 6000
-    Provider: Anthropic
+    Model: gpt-4o-mini
+    Max tokens: 4000
+    Provider: OpenAI
     """
 
     def __init__(self):
-        super().__init__(
-            model="claude-haiku-4-5-20251001",
-            max_tokens=6000,
-            provider="anthropic",
-        )
+        super().__init__(model="gpt-4o-mini", max_tokens=4000, provider="openai")
 
     def run(self, input_dict: dict) -> dict:
         """
