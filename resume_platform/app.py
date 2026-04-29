@@ -648,15 +648,23 @@ with tabs[2]:
     )
 
     if st.button("Find & Close Gaps", type="primary"):
+        status = st.empty()
+        bar = st.progress(0)
+        status.info("Starting gap closer...")
+
         if not st.session_state.get("parsed_resume_structured"):
             # Build structured resume from parsed text
             resume_text = st.session_state.get("parsed_resume_text", "")
             if resume_text:
+                status.info("Preparing your parsed resume...")
+                bar.progress(5)
                 from parser import _build_structured_resume
                 st.session_state["parsed_resume_structured"] = _build_structured_resume(resume_text)
                 # Also build agent1_output if missing
                 resume_text = st.session_state.get("parsed_resume_text", "")
                 if not st.session_state.get("agent1_output"):
+                    status.info("Reading resume strengths and weaknesses...")
+                    bar.progress(10)
                     st.session_state["agent1_output"] = ResumeUnderstandingAgent().run({
                         "resume_text": resume_text,
                         "user_id": "streamlit_gc",
@@ -669,6 +677,8 @@ with tabs[2]:
         if "resume_sections" not in st.session_state:
             resume_text = st.session_state.get("parsed_resume_text", "")
             if resume_text:
+                status.info("Splitting resume into sections...")
+                bar.progress(12)
                 resume_sections = SectionerAgent().run({"resume_text": resume_text})
                 # Fallback if sectioner returns empty dict
                 if not resume_sections:
@@ -693,11 +703,11 @@ with tabs[2]:
             st.error("Paste a job description above.")
             st.stop()
 
-        status = st.empty()
-        bar = st.progress(0)
         try:
             # Ensure agent2_output (JD analysis)
             if "agent2_output" not in st.session_state or st.session_state.get("gc_jd_cached") != jd_text:
+                status.info("Reading the job description...")
+                bar.progress(14)
                 st.session_state["agent2_output"] = JDIntelligenceAgent().run({"jd_text": jd_text})
                 st.session_state["gc_jd_cached"] = jd_text
 
