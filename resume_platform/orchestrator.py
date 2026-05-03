@@ -14,19 +14,57 @@ from agents.gap_analyzer import GapAnalyzerAgent
 from agents.jd_intelligence import JDIntelligenceAgent
 from agents.recruiter_sim import RecruiterSimulatorAgent
 from agents.resume_understanding import ResumeUnderstandingAgent
+from agents.sectioner_agent import SectionerAgent
 from agents.rewriter import RewriterAgent
 from engine.ats_scorer import score_resume
 from engine.percentile import get_percentile
+from validators import ResumeUnderstandingValidator, RewriterValidator
 
 
 class Orchestrator:
     def __init__(self, user_id: Optional[str] = None):
         self.user_id = user_id
         self.resume_understanding = ResumeUnderstandingAgent()
+        self.sectioner = SectionerAgent()
         self.jd_intelligence = JDIntelligenceAgent()
         self.gap_analyzer = GapAnalyzerAgent()
         self.rewriter = RewriterAgent()
         self.recruiter_sim = RecruiterSimulatorAgent()
+
+    def _build_merged_resume_sections(self, resume_und: dict, resume_text: str):
+        """Merge A1 and Sectioner sections; keep richer section payload."""
+        from schemas.common import SectionText
+
+        a1_raw = resume_und.get("resume_sections", {})
+        a1_sections = {
+            k: SectionText(**v) if isinstance(v, dict) else v
+            for k, v in a1_raw.items()
+        }
+
+        merged = dict(a1_sections)
+        try:
+            sectioner_raw = self.sectioner.run({"resume_text": resume_text}) or {}
+            sectioner_sections = {
+                k: SectionText(**v) if isinstance(v, dict) else v
+                for k, v in sectioner_raw.items()
+            }
+        except Exception as exc:
+            logging.warning("Sectioner merge skipped: %s", exc)
+            sectioner_sections = {}
+
+        for name, sec in sectioner_sections.items():
+            cur = merged.get(name)
+            if not cur:
+                merged[name] = sec
+                continue
+            cur_count = len(cur.sub_entries or [])
+            new_count = len(sec.sub_entries or [])
+            cur_len = len(cur.full_text or "")
+            new_len = len(sec.full_text or "")
+            if (new_count > cur_count) or (new_count == cur_count and new_len > cur_len):
+                merged[name] = sec
+
+        return merged
 
     def _infer_strengths_from_resume(self, resume_und: dict) -> dict:
         return {
@@ -114,11 +152,11 @@ class Orchestrator:
             })
             jd_intel = None
 
-        resume_sections_raw = resume_und.get("resume_sections", {})
-        from schemas.common import SectionText
-        resume_sections = {
-            k: SectionText(**v) if isinstance(v, dict) else v
-            for k, v in resume_sections_raw.items()
+        resume_und = ResumeUnderstandingValidator().validate_and_fix(resume_und, resume_text)
+        resume_sections = self._build_merged_resume_sections(resume_und, resume_text)
+        resume_und["resume_sections"] = {
+            k: v.model_dump() if hasattr(v, "model_dump") else v
+            for k, v in resume_sections.items()
         }
         if progress_cb: progress_cb({"step":1,"label":"Resume parsed successfully","pct":30})
 
@@ -147,6 +185,8 @@ class Orchestrator:
                     "jd_intelligence": jd_intel,
                     "style_fingerprint": None,
                 })
+                if rewrites:
+                    rewrites = RewriterValidator().validate_and_fix(rewrites, resume_sections, resume_text)
                 if progress_cb: progress_cb({"step":3,"label":"Resume rewritten successfully","pct":95})
             except Exception as exc:
                 logging.warning("Rewriter failed: %s. Using gap-based fallback.", exc)

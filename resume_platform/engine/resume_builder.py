@@ -29,6 +29,7 @@ COLOR_SECTION_HDR= "1F3864"   # dark navy — section header text + border
 COLOR_BODY       = "2E2E2E"   # near-black — body text and bullets
 COLOR_LINK       = "1F5FA6"   # blue — hyperlinks in contact
 COLOR_DATE       = "888888"   # light grey italic — date range
+COLOR_ROLE_CO    = COLOR_NAME  # role/company blue
 
 # ── Section canonical order and labels ──
 SECTION_ORDER = ["summary", "skills", "experience", "education", "certifications", "awards", "projects"]
@@ -296,23 +297,17 @@ def build_final_docx(structured: dict, rewrites: dict, style: str = "balanced") 
     def _get_content(section_name):
         """Return rewrite content, balanced fallback, then structured original."""
         rw = rewrites.get(section_name, {})
+        if not rw:
+            # Accept aliased rewrite keys (e.g., work_experience -> experience)
+            for key, value in rewrites.items():
+                if _normalize_key(str(key)) == section_name:
+                    rw = value
+                    break
         for key in (style, "balanced"):
             val = rw.get(key, "") if isinstance(rw, dict) else ""
             if val and len(val.strip()) >= 10 and not _is_placeholder(val.strip()):
                 return val
-        orig = structured.get(section_name, "")
-        if isinstance(orig, list):
-            parts = []
-            for item in orig:
-                if isinstance(item, dict):
-                    parts.append("  ".join(
-                        v for v in item.values()
-                        if isinstance(v, str) and v.strip()
-                    ))
-                elif isinstance(item, str) and item.strip():
-                    parts.append(item.strip())
-            orig = "\n".join(parts)
-        return (orig or "").strip()
+        return _extract_section_content(structured, section_name).strip()
 
     for sec_name in SECTION_ORDER:
         content = _get_content(sec_name)
@@ -332,8 +327,8 @@ def build_final_docx(structured: dict, rewrites: dict, style: str = "balanced") 
                 s = line.strip()
                 if not s or _is_placeholder(s):
                     continue
-                p = doc.add_paragraph()
                 if ":" in s:
+                    p = doc.add_paragraph()
                     label, rest = s.split(":", 1)
                     rl = p.add_run(label + ":")
                     rl.bold = True
@@ -343,10 +338,32 @@ def build_final_docx(structured: dict, rewrites: dict, style: str = "balanced") 
                     rr.font.size = Pt(9.5)
                     rr.font.color.rgb = RGBColor(0x2E, 0x2E, 0x2E)
                 else:
-                    r = p.add_run(s)
-                    r.font.size = Pt(9.5)
-                    r.font.color.rgb = RGBColor(0x2E, 0x2E, 0x2E)
-                p.paragraph_format.space_after = Pt(1)
+                    # Convert comma/pipe-separated skill lists into bullets.
+                    chunks = [
+                        c.strip() for c in re.split(r"[|,;]\s*", s) if c.strip()
+                    ]
+                    if len(chunks) > 1:
+                        for skill in chunks:
+                            _bullet(f"• {skill}")
+                    else:
+                        p = doc.add_paragraph()
+                        r = p.add_run(s)
+                        r.font.size = Pt(9.5)
+                        r.font.color.rgb = RGBColor(0x2E, 0x2E, 0x2E)
+                        p.paragraph_format.space_after = Pt(1)
+        elif sec_name == "awards":
+            for line in content.splitlines():
+                s = line.strip()
+                if not s or _is_placeholder(s):
+                    continue
+                entries = [e.strip() for e in re.split(r";\s*", s) if e.strip()]
+                if len(entries) > 1:
+                    for entry in entries:
+                        _bullet(f"• {entry}")
+                elif s.startswith(bullet_markers):
+                    _bullet(s)
+                else:
+                    _bullet(f"• {s}")
         else:
             for line in content.splitlines():
                 s = line.strip()
@@ -438,6 +455,15 @@ def _get_structured_value(structured: dict, section: str):
     for key, value in structured.items():
         if _normalize_key(key) == section:
             return value
+    nested_sections = structured.get("resume_sections") or structured.get("sections") or {}
+    if isinstance(nested_sections, dict):
+        for key, value in nested_sections.items():
+            if _normalize_key(str(key)) != section:
+                continue
+            if isinstance(value, dict):
+                return value.get("full_text", "")
+            if hasattr(value, "full_text"):
+                return getattr(value, "full_text", "")
     return ""
 
 

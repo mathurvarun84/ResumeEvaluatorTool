@@ -205,7 +205,11 @@ class GapAnalyzerAgent(BaseAgent):
             output_model = GapAnalyzerOutput
 
         inp = GapAnalyzerInput(**input_dict)
-        resume_sections: Dict[str, SectionText] = input_dict.get("resume_sections", {})
+        resume_sections_raw = input_dict.get("resume_sections", {})
+        resume_sections: Dict[str, SectionText] = {
+            k: SectionText(**v) if isinstance(v, dict) else v
+            for k, v in resume_sections_raw.items()
+        }
 
         jd_analysis = inp.jd_analysis or inp.jd_intelligence
         resume_analysis = inp.resume_analysis or inp.resume_understanding

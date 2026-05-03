@@ -14,6 +14,7 @@ from schemas.common import SectionText, SubEntry
 from engine.ats_scorer import score_resume
 from engine.resume_builder import build_final_docx
 from orchestrator import Orchestrator
+from validators import ResumeUnderstandingValidator, RewriterValidator
 
 
 EXPECTED_RECRUITER_SIM_MODEL = "claude-haiku-4-5-20251001"
@@ -669,17 +670,29 @@ with tabs[2]:
                         "resume_text": resume_text,
                         "user_id": "streamlit_gc",
                     })
+                    st.session_state["agent1_output"] = ResumeUnderstandingValidator().validate_and_fix(
+                        st.session_state["agent1_output"],
+                        resume_text,
+                    )
             else:
                 st.error("Upload a resume first in the Evaluate tab.")
                 st.stop()
 
         # Generate sectioner data for gap analysis and rewriter
+        if st.session_state.get("agent1_output") and st.session_state.get("parsed_resume_text"):
+            st.session_state["agent1_output"] = ResumeUnderstandingValidator().validate_and_fix(
+                st.session_state["agent1_output"],
+                st.session_state["parsed_resume_text"],
+            )
+
         if "resume_sections" not in st.session_state:
             resume_text = st.session_state.get("parsed_resume_text", "")
             if resume_text:
                 status.info("Splitting resume into sections...")
                 bar.progress(12)
-                resume_sections = SectionerAgent().run({"resume_text": resume_text})
+                resume_sections = st.session_state.get("agent1_output", {}).get("resume_sections", {})
+                if not resume_sections:
+                    resume_sections = SectionerAgent().run({"resume_text": resume_text})
                 # Fallback if sectioner returns empty dict
                 if not resume_sections:
                     # Build minimal sections from parsed_resume_structured
@@ -750,6 +763,11 @@ with tabs[2]:
                 "gaps":              gap_output.get("section_gaps", []),
                 "style_fingerprint": st.session_state.get("style_fingerprint", ""),
             })
+            rewrite_output = RewriterValidator().validate_and_fix(
+                rewrite_output,
+                st.session_state["resume_sections"],
+                st.session_state.get("parsed_resume_text", ""),
+            )
             st.session_state["rewrite_output"] = rewrite_output
             # DEBUG
             #st.write("rewrite_output keys:", list(rewrite_output.keys()))
@@ -1003,7 +1021,10 @@ with tabs[2]:
         for section_name, section_text_obj in st.session_state.get("resume_sections", {}).items():
             if section_name in covered_sections:
                 continue
-            full_text = getattr(section_text_obj, "full_text", "")
+            if isinstance(section_text_obj, dict):
+                full_text = section_text_obj.get("full_text", "")
+            else:
+                full_text = getattr(section_text_obj, "full_text", "")
             if not full_text.strip():
                 continue
             label = f"{section_name.upper()} — unchanged (from original)"

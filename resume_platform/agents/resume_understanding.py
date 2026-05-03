@@ -39,12 +39,12 @@ class ResumeUnderstandingAgent(BaseAgent):
     an additional 'resume_health' key for the Evaluate tab.
 
     Model: gpt-4o-mini
-    Max tokens: 4000
+    Max tokens: 7000
     Provider: OpenAI
     """
 
     def __init__(self):
-        super().__init__(model="gpt-4o-mini", max_tokens=4000, provider="openai")
+        super().__init__(model="gpt-4o-mini", max_tokens=7000, provider="openai")
 
     def run(self, input_dict: dict) -> dict:
         """
@@ -135,6 +135,7 @@ class ResumeUnderstandingAgent(BaseAgent):
         # Call LLM and parse JSON response
         raw_response = self._call_llm(system_prompt, resume_text)
         parsed_output = self._parse_json(raw_response)
+        
         # Validate and structure the data using pydantic model
         # Pydantic v2 will coerce strings to enums (e.g., "senior" → Seniority.SENIOR)
         output = ResumeUnderstandingOutput(**parsed_output)
