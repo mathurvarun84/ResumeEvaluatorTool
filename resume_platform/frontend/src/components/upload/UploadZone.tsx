@@ -1,7 +1,7 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ChangeEvent, DragEvent } from "react";
 
-import { postAnalyze } from "../../api/client";
+import { analyzeResume } from "../../api/analyze";
 import { IS_MOCK } from "../../hooks/useMockData";
 import { useResumeStore } from "../../store/useResumeStore";
 
@@ -16,15 +16,43 @@ const isAcceptedFile = (candidate: File): boolean => {
 export default function UploadZone() {
   const [file, setFile] = useState<File | null>(null);
   const [jdText, setJdText] = useState("");
-  const [runSim] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitProgress, setSubmitProgress] = useState(0);
+  const [loadingStepIndex, setLoadingStepIndex] = useState(0);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const loadingSteps = [
+    "Analyzing your resume…",
+    "Running recruiter simulation…",
+    "Calculating market position…",
+  ];
 
   const setJobId = useResumeStore((state) => state.setJobId);
+  const setAnalysisResult = useResumeStore((state) => state.setAnalysisResult);
+  const setActiveTab = useResumeStore((state) => state.setActiveTab);
   const setIsAnalyzing = useResumeStore((state) => state.setIsAnalyzing);
+  const setIsLoading = useResumeStore((state) => state.setIsLoading);
   const setAnalysisError = useResumeStore((state) => state.setAnalysisError);
   const setCurrentProgress = useResumeStore((state) => state.setCurrentProgress);
+
+  useEffect(() => {
+    if (!isSubmitting) {
+      return;
+    }
+
+    const progressTimer = window.setInterval(() => {
+      setSubmitProgress((prev) => Math.min(90, prev + 3));
+    }, 270);
+    const copyTimer = window.setInterval(() => {
+      setLoadingStepIndex((prev) => (prev + 1) % loadingSteps.length);
+    }, 3000);
+
+    return () => {
+      window.clearInterval(progressTimer);
+      window.clearInterval(copyTimer);
+    };
+  }, [isSubmitting]);
 
   const validateAndSetFile = (candidate: File | null): void => {
     setSubmitError(null);
@@ -69,26 +97,35 @@ export default function UploadZone() {
       return;
     }
 
-    const formData = new FormData();
-    formData.append("resume", file);
-    formData.append("jd_text", jdText);
-    formData.append("run_sim", String(runSim));
-
     if (IS_MOCK) {
       setJobId("mock-job-123");
       setIsAnalyzing(true);
+      setIsLoading(true);
       return;
     }
 
     try {
-      const result = await postAnalyze(formData);
+      setIsSubmitting(true);
+      setSubmitProgress(0);
+      setLoadingStepIndex(0);
+      setIsLoading(true);
+      const result = await analyzeResume(file, jdText);
+      setSubmitProgress(100);
+      setAnalysisResult(result);
       setJobId(result.job_id);
-      setIsAnalyzing(true);
+      setIsAnalyzing(false);
+      setActiveTab("overview");
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Unable to start analysis.";
       setSubmitError(message);
       setAnalysisError(message);
+    } finally {
+      window.setTimeout(() => {
+        setIsSubmitting(false);
+        setSubmitProgress(0);
+      }, 400);
+      setIsLoading(false);
     }
   };
 
@@ -133,6 +170,24 @@ export default function UploadZone() {
         ))}
       </div>
 
+      {submitError && (
+        <div
+          style={{
+            background: "#fef2f2",
+            border: "1.5px solid #fecaca",
+            borderRadius: "12px",
+            padding: "12px 14px",
+            marginBottom: "16px",
+            color: "#dc2626",
+            fontSize: "13px",
+            lineHeight: 1.55,
+          }}
+        >
+          <span style={{ fontWeight: 700 }}>Unable to analyze resume: </span>
+          {submitError}
+        </div>
+      )}
+
       {/* ── MAIN CARD ── */}
       <div style={{
         background: '#ffffff', border: '1.5px solid #e5e7eb',
@@ -140,6 +195,30 @@ export default function UploadZone() {
         boxShadow: '0 4px 0 #e5e7eb, 0 8px 24px rgba(0,0,0,0.06)',
         marginBottom: '20px'
       }}>
+        {isSubmitting && (
+          <div style={{ marginBottom: "18px" }}>
+            <div
+              style={{
+                height: "8px",
+                background: "#f3f4f6",
+                borderRadius: "999px",
+                overflow: "hidden",
+              }}
+            >
+              <div
+                style={{
+                  width: `${submitProgress}%`,
+                  height: "100%",
+                  background: "#6366f1",
+                  transition: "width 0.25s ease",
+                }}
+              />
+            </div>
+            <div style={{ marginTop: "8px", fontSize: "13px", color: "#6b7280" }}>
+              {loadingSteps[loadingStepIndex]}
+            </div>
+          </div>
+        )}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '40px' }}>
 
           {/* ── LEFT: Upload Resume ── */}
@@ -336,15 +415,15 @@ export default function UploadZone() {
           <button
             type="button"
             onClick={() => { void handleSubmit(); }}
-            disabled={!file}
+            disabled={!file || isSubmitting}
             style={{
               width: '100%', display: 'flex', alignItems: 'center',
               justifyContent: 'center', gap: '10px',
-              background: file ? '#6366f1' : '#f3f4f6',
-              color: file ? '#ffffff' : '#9ca3af',
+              background: file && !isSubmitting ? '#6366f1' : '#f3f4f6',
+              color: file && !isSubmitting ? '#ffffff' : '#9ca3af',
               border: 'none', borderRadius: '14px', padding: '17px',
-              fontSize: '16px', fontWeight: 700, cursor: file ? 'pointer' : 'not-allowed',
-              boxShadow: file
+              fontSize: '16px', fontWeight: 700, cursor: file && !isSubmitting ? 'pointer' : 'not-allowed',
+              boxShadow: file && !isSubmitting
                 ? '0 4px 0 #4338ca, 0 6px 16px rgba(99,102,241,0.25)'
                 : '0 4px 0 #d1d5db',
               transition: 'transform 0.1s',
@@ -352,14 +431,8 @@ export default function UploadZone() {
             }}
           >
             <span style={{ fontSize: '17px' }}>✦</span>
-            Analyze Resume
+            {isSubmitting ? "Analyzing..." : "Analyze Resume"}
           </button>
-
-          {submitError && (
-            <p style={{ fontSize: '13px', color: '#ef4444', textAlign: 'center', marginTop: '12px' }}>
-              {submitError}
-            </p>
-          )}
 
           <p style={{
             fontSize: '12.5px', color: '#9ca3af', textAlign: 'center',

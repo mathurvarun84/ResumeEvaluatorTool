@@ -2,8 +2,12 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
 
 import { getResult } from "./api/client";
+import { EvaluationDashboard } from "./EvaluationDashboard";
 import TopBar from "./components/layout/TopBar";
 import TabNav from "./components/layout/TabNav";
+import ActionableFixes from "./components/ActionableFixes";
+import GapCloser from "./components/GapCloser";
+import RecruiterSimulation from "./components/RecruiterSimulation";
 import AnalysisProgress from "./components/upload/AnalysisProgress";
 import UploadZone from "./components/upload/UploadZone";
 import { IS_MOCK } from "./hooks/useMockData";
@@ -24,6 +28,7 @@ function AppShell() {
   const setActiveTab = useResumeStore((state) => state.setActiveTab);
   const setCurrentProgress = useResumeStore((state) => state.setCurrentProgress);
   const setAnalysisError = useResumeStore((state) => state.setAnalysisError);
+  const setIsLoading = useResumeStore((state) => state.setIsLoading);
   const resultLoadedRef = useRef(false);
 
   useEffect(() => {
@@ -50,6 +55,7 @@ function AppShell() {
         setCurrentProgress(completeEvent);
         setAnalysisResult(MOCK_ANALYSIS_RESULT);
         setIsAnalyzing(false);
+        setIsLoading(false);
         setActiveTab("overview");
       }, 3500)
     );
@@ -64,6 +70,7 @@ function AppShell() {
     setAnalysisResult,
     setCurrentProgress,
     setIsAnalyzing,
+    setIsLoading,
   ]);
 
   useEffect(() => {
@@ -81,6 +88,7 @@ function AppShell() {
       .then((result) => {
         setAnalysisResult(result);
         setIsAnalyzing(false);
+        setIsLoading(false);
         setActiveTab("overview");
       })
       .catch((error: unknown) => {
@@ -88,6 +96,7 @@ function AppShell() {
           error instanceof Error ? error.message : "Unable to load analysis.";
         setAnalysisError(message);
         setIsAnalyzing(false);
+        setIsLoading(false);
       });
   }, [
     currentProgress?.status,
@@ -96,6 +105,7 @@ function AppShell() {
     setAnalysisError,
     setAnalysisResult,
     setIsAnalyzing,
+    setIsLoading,
   ]);
 
   if (!analysisResult) {
@@ -114,29 +124,16 @@ function AppShell() {
       <TabNav />
       <div className="tab-content">
         <div style={{ display: activeTab === "overview" ? "block" : "none" }}>
-          <div className="p-7 text-center text-gray-400">
-            Overview tab — coming Day 3
-          </div>
+          <EvaluationDashboard onTabChange={(tab: string) => setActiveTab(tab as import("./types").TabId)} />
         </div>
         <div style={{ display: activeTab === "fixes" ? "block" : "none" }}>
-          <div className="p-7 text-center text-gray-400">
-            Actionable Fixes — coming Day 4
-          </div>
+          <ActionableFixes />
         </div>
         <div style={{ display: activeTab === "recruiter" ? "block" : "none" }}>
-          <div className="p-7 text-center text-gray-400">
-            Recruiter View — coming Day 5
-          </div>
+          <RecruiterSimulation />
         </div>
         <div style={{ display: activeTab === "gap" ? "block" : "none" }}>
-          <div className="p-7 text-center text-gray-400">
-            Gap Closer — coming Day 6
-          </div>
-        </div>
-        <div style={{ display: activeTab === "progress" ? "block" : "none" }}>
-          <div className="p-7 text-center text-gray-400">
-            Progress — coming Day 7
-          </div>
+          <GapCloser />
         </div>
       </div>
     </div>

@@ -57,6 +57,8 @@ export interface PersonaVerdict {
   ignored: string[];
   rejection_reason: string;
   shortlist_decision: boolean;
+  fit_score: number;
+  flip_condition: string;
 }
 
 export interface SimResult {
@@ -84,19 +86,47 @@ export interface ResumeUnderstanding {
   resume_sections: Record<string, { full_text: string }>;
 }
 
+export interface PriorityFix {
+  section: string;
+  gap_reason: string;
+  rewrite_instruction: string;
+  missing_keywords: string[];
+  needs_change: boolean;
+}
+
 export interface GapResult {
   jd_match_score_before: number | null;
+  jd_match_score_after: number;
   section_gaps: SectionGap[];
   missing_keywords: string[];
-  priority_fixes: string[];
+  priority_fixes: string[] | PriorityFix[];
   changes: ActionableChange[];
 }
 
 export interface PositioningResult {
+  current_tier: string;
+  current_tier_label: string;
+  current_tier_examples: string;
+  next_tier_label: string;
+  next_tier_examples: string;
+  changes_needed: number;
+  current_ctc_min: number;
+  current_ctc_max: number;
+  potential_ctc_min: number;
+  potential_ctc_max: number;
+  ctc_delta_min: number;
+  ctc_delta_max: number;
   positioning_line: string;
   delta_line: string;
   cta_line: string;
+  rank_rationale: string;
   fix_items: string[];
+}
+
+export interface PercentileResult {
+  score: number;
+  label: string;
+  percentile: number;
 }
 
 export interface AnalysisResult {
@@ -106,7 +136,7 @@ export interface AnalysisResult {
   gap: GapResult | null;
   rewrites: Record<string, SectionRewrite> | null;
   sim: SimResult | null;
-  percentile: number | null;
+  percentile: PercentileResult | null;
   positioning: PositioningResult | null;
 }
 

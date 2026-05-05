@@ -14,6 +14,7 @@ interface ResumeStoreState {
   acceptedSections: Record<string, RewriteStyle>;
   activeTab: TabId;
   isAnalyzing: boolean;
+  isLoading: boolean;
   analysisError: string | null;
   currentProgress: SSEProgressEvent | null;
   docxId: string | null;
@@ -24,6 +25,7 @@ interface ResumeStoreState {
   acceptSection: (section: string, style: RewriteStyle) => void;
   setActiveTab: (tab: TabId) => void;
   setIsAnalyzing: (isAnalyzing: boolean) => void;
+  setIsLoading: (isLoading: boolean) => void;
   setAnalysisError: (analysisError: string | null) => void;
   setCurrentProgress: (progress: SSEProgressEvent | null) => void;
   setDocxId: (docxId: string | null) => void;
@@ -49,6 +51,7 @@ export const useResumeStore = create<ResumeStoreState>((set) => ({
   acceptedSections: {},
   activeTab: "overview",
   isAnalyzing: false,
+  isLoading: false,
   analysisError: null,
   currentProgress: null,
   docxId: null,
@@ -66,6 +69,7 @@ export const useResumeStore = create<ResumeStoreState>((set) => ({
     })),
   setActiveTab: (activeTab) => set({ activeTab }),
   setIsAnalyzing: (isAnalyzing) => set({ isAnalyzing }),
+  setIsLoading: (isLoading) => set({ isLoading }),
   setAnalysisError: (analysisError) => set({ analysisError }),
   setCurrentProgress: (currentProgress) => set({ currentProgress }),
   setDocxId: (docxId) => set({ docxId }),
@@ -75,6 +79,7 @@ export const useResumeStore = create<ResumeStoreState>((set) => ({
       analysisResult: null,
       acceptedSections: {},
       isAnalyzing: false,
+      isLoading: false,
       analysisError: null,
       currentProgress: null,
       docxId: null,

@@ -73,6 +73,7 @@ export const MOCK_ANALYSIS_RESULT: AnalysisResult = {
   },
   gap: {
     jd_match_score_before: 73,
+    jd_match_score_after: 88,
     section_gaps: [
       {
         section: "summary",
@@ -170,9 +171,34 @@ export const MOCK_ANALYSIS_RESULT: AnalysisResult = {
       "observability",
     ],
     priority_fixes: [
-      "Add quantified impact metrics to top three experience bullets.",
-      "Expand skills section with Kafka, CI/CD, and production-grade Docker usage.",
-      "Rewrite summary to emphasize ownership of scalable backend architecture.",
+      {
+        section: "experience",
+        gap_reason: "Few quantified achievements in experience bullets",
+        rewrite_instruction: "Most experience bullets describe responsibilities but miss quantified outcomes. Add metrics like % improvements, team sizes, or business impact.",
+        missing_keywords: ["impact", "metrics", "throughput"],
+        needs_change: true,
+      },
+      {
+        section: "skills",
+        gap_reason: "Missing Kafka, CI/CD, and production-grade Docker keywords",
+        rewrite_instruction: "JD expects distributed systems and delivery tooling that are not explicitly listed. Group skills by backend, cloud, and delivery practices.",
+        missing_keywords: ["Kafka", "CI/CD", "Docker"],
+        needs_change: true,
+      },
+      {
+        section: "summary",
+        gap_reason: "Summary misses ownership and scalability keywords",
+        rewrite_instruction: "Rewrite summary to highlight architecture decisions, delivery ownership, and cross-team impact. Include: system design, ownership, scalability.",
+        missing_keywords: ["system design", "ownership", "scalability"],
+        needs_change: true,
+      },
+      {
+        section: "certifications",
+        gap_reason: "Only one certification; target role favors cloud delivery depth",
+        rewrite_instruction: "Reframe certifications to align with production cloud operations and reliability practices.",
+        missing_keywords: ["AWS", "Kubernetes"],
+        needs_change: true,
+      },
     ],
     changes: [
       {
@@ -288,6 +314,8 @@ Prepared to operate as a senior-level force multiplier in organizations with a h
         rejection_reason:
           "Insufficient evidence of operating at very large scale or owning deep system design decisions.",
         shortlist_decision: false,
+        fit_score: 52,
+        flip_condition: "Add 2–3 system design examples with scale indicators (QPS, latency, user count).",
       },
       {
         persona: "Zepto/Blinkit Hiring Manager",
@@ -297,6 +325,8 @@ Prepared to operate as a senior-level force multiplier in organizations with a h
         ignored: ["Older education details"],
         rejection_reason: "",
         shortlist_decision: true,
+        fit_score: 78,
+        flip_condition: "",
       },
       {
         persona: "Series B Startup CTO",
@@ -306,6 +336,8 @@ Prepared to operate as a senior-level force multiplier in organizations with a h
         ignored: ["Lack of awards section"],
         rejection_reason: "",
         shortlist_decision: true,
+        fit_score: 74,
+        flip_condition: "",
       },
       {
         persona: "Mid-Size Product Company HR",
@@ -315,6 +347,8 @@ Prepared to operate as a senior-level force multiplier in organizations with a h
         ignored: ["Missing explicit achievements section"],
         rejection_reason: "",
         shortlist_decision: true,
+        fit_score: 70,
+        flip_condition: "",
       },
       {
         persona: "Enterprise IT Recruiter",
@@ -325,6 +359,8 @@ Prepared to operate as a senior-level force multiplier in organizations with a h
         rejection_reason:
           "Would prefer stronger certification coverage for enterprise governance-heavy roles.",
         shortlist_decision: false,
+        fit_score: 55,
+        flip_condition: "Add cloud reliability certifications like CKAD or AWS Solutions Architect.",
       },
       {
         persona: "D2C Tech Lead",
@@ -334,6 +370,8 @@ Prepared to operate as a senior-level force multiplier in organizations with a h
         ignored: ["Academic history"],
         rejection_reason: "",
         shortlist_decision: true,
+        fit_score: 72,
+        flip_condition: "",
       },
       {
         persona: "FinTech Senior Engineer",
@@ -343,6 +381,8 @@ Prepared to operate as a senior-level force multiplier in organizations with a h
         ignored: ["Awards and extracurricular sections"],
         rejection_reason: "",
         shortlist_decision: true,
+        fit_score: 68,
+        flip_condition: "",
       },
       {
         persona: "EdTech Hiring Manager",
@@ -352,6 +392,8 @@ Prepared to operate as a senior-level force multiplier in organizations with a h
         ignored: ["Limited teaching/mentorship mentions"],
         rejection_reason: "",
         shortlist_decision: true,
+        fit_score: 65,
+        flip_condition: "",
       },
       {
         persona: "Service Company Bench Manager",
@@ -362,6 +404,8 @@ Prepared to operate as a senior-level force multiplier in organizations with a h
         rejection_reason:
           "Domain focus is narrow for bench allocation across varied enterprise client projects.",
         shortlist_decision: false,
+        fit_score: 48,
+        flip_condition: "Show breadth across multiple project types and client-facing communication.",
       },
       {
         persona: "MAANG Referral Reviewer",
@@ -372,6 +416,8 @@ Prepared to operate as a senior-level force multiplier in organizations with a h
         rejection_reason:
           "Key achievements are not quantified, making impact difficult to calibrate against high-bar peer candidates.",
         shortlist_decision: false,
+        fit_score: 50,
+        flip_condition: "Add 3–5 quantified achievements with measurable business impact.",
       },
     ],
     shortlist_rate: 0.6,
@@ -388,12 +434,24 @@ Prepared to operate as a senior-level force multiplier in organizations with a h
     most_critical_fix:
       "Add quantified impact metrics to core experience bullets so reviewers can clearly assess scale and business outcomes.",
   },
-  percentile: 64,
+  percentile: { score: 62, label: "Top 38%", percentile: 62 },
   positioning: {
-    positioning_line: "Strong mid-level engineer ready for senior transition",
-    delta_line: "Fix 3 critical gaps → move from 68 → 82 ATS score",
-    cta_line:
-      "Apply the recommended fixes to unlock senior SDE opportunities at product startups",
+    current_tier: "product_mid",
+    current_tier_label: "Mid-size Product",
+    current_tier_examples: "Razorpay, Freshworks, Postman",
+    next_tier_label: "Product Unicorn",
+    next_tier_examples: "Zepto, Groww, Meesho",
+    changes_needed: 3,
+    current_ctc_min: 22,
+    current_ctc_max: 35,
+    potential_ctc_min: 35,
+    potential_ctc_max: 55,
+    ctc_delta_min: 13,
+    ctc_delta_max: 20,
+    positioning_line: "Your resume is competitive for Mid-size Product roles (Razorpay, Freshworks, Postman).",
+    delta_line: "After fixes: ₹35–55 LPA (currently ₹22–35 LPA). Potential gain: ₹13–20 LPA/year.",
+    cta_line: "3 changes needed to reach Product Unicorn (Zepto, Groww, Meesho).",
+    rank_rationale: "Above Average because quantified impact metrics are thin. 2 targeted fixes can move you toward Top 25%.",
     fix_items: [
       "Add quantified impact metrics to top three experience bullets.",
       "Expand skills section with Kafka, CI/CD, and production-grade Docker usage.",
